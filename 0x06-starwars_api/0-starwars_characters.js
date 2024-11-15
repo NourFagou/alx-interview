@@ -1,44 +1,24 @@
 #!/usr/bin/node
-
 const request = require('request');
-const movieId = process.argv[2];
+const API_URL = 'https://swapi-api.hbtn.io/api';
 
-if (!movieId) {
-  console.error('Usage: ./0-starwars_characters.js <movie_id>');
-  process.exit(1);
-}
-
-const apiUrl = `https://swapi-api.alx-tools.com/api/films/${movieId}/`;
-
-request(apiUrl, (error, response, body) => {
-  if (error) {
-    console.error(error);
-    process.exit(1);
-  }
-
-  if (response.statusCode !== 200) {
-    console.error(`Error: ${response.statusCode}`);
-    process.exit(1);
-  }
-
-  const filmData = JSON.parse(body);
-  const characters = filmData.characters;
-
-  const fetchCharactersSequentially = async () => {
-    try {
-      for (const url of characters) {
-        await new Promise((resolve, reject) => {
-          request(url, (err, res, charBody) => {
-            if (err) reject(err);
-            resolve(JSON.parse(charBody).name);
-          });
-        });
-      }
-      console.log('OK'); // Print OK if all characters are fetched
-    } catch (err) {
-      console.error(err);
+if (process.argv.length > 2) {
+  request(`${API_URL}/films/${process.argv[2]}/`, (err, _, body) => {
+    if (err) {
+      console.log(err);
     }
-  };
+    const charactersURL = JSON.parse(body).characters;
+    const charactersName = charactersURL.map(
+      url => new Promise((resolve, reject) => {
+        request(url, (promiseErr, __, charactersReqBody) => {
+          if (promiseErr) {
+            reject(promiseErr);
+          }
+          resolve(JSON.parse(charactersReqBody).name);
+        });
+      }));
 
-  fetchCharactersSequentially();
-});
+    Promise.all(charactersName)
+      .then(names => console.log(names.join('\n')))
+      .catch(allErr => console.log(allErr));
+  });
