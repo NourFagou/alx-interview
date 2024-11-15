@@ -2,37 +2,43 @@
 
 const request = require('request');
 const movieId = process.argv[2];
-const apiUrl = `https://swapi-api.hbtn.io/api/films/${movieId}/`;
 
-// Check if movieId is provided
 if (!movieId) {
-  console.error('Please provide a Movie ID.');
+  console.error('Usage: ./0-starwars_characters.js <movie_id>');
   process.exit(1);
 }
 
-// Make a request to get the movie details
+const apiUrl = `https://swapi-api.alx-tools.com/api/films/${movieId}/`;
+
 request(apiUrl, (error, response, body) => {
   if (error) {
     console.error(error);
-    return;
+    process.exit(1);
   }
 
-  try {
-    const movie = JSON.parse(body);
-    const characters = movie.characters;
-
-    // For each character URL, make a request to get the character's name
-    characters.forEach((characterUrl) => {
-      request(characterUrl, (error, response, body) => {
-        if (error) {
-          console.error(error);
-          return;
-        }
-        const character = JSON.parse(body);
-        console.log(character.name);
-      });
-    });
-  } catch (parseError) {
-    console.error('Error parsing JSON:', parseError);
+  if (response.statusCode !== 200) {
+    console.error(`Error: ${response.statusCode}`);
+    process.exit(1);
   }
+
+  const filmData = JSON.parse(body);
+  const characters = filmData.characters;
+
+  const fetchCharactersSequentially = async () => {
+    try {
+      for (const url of characters) {
+        await new Promise((resolve, reject) => {
+          request(url, (err, res, charBody) => {
+            if (err) reject(err);
+            resolve(JSON.parse(charBody).name);
+          });
+        });
+      }
+      console.log('OK'); // Print OK if all characters are fetched
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchCharactersSequentially();
 });
