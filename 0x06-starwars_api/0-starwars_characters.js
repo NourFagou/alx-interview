@@ -6,7 +6,7 @@ const apiUrl = `https://swapi-api.hbtn.io/api/films/${movieId}/`;
 
 // Check if movieId is provided
 if (!movieId) {
-  console.error("Please provide a Movie ID.");
+  console.error('Please provide a Movie ID.');
   process.exit(1);
 }
 
@@ -33,6 +33,6 @@ request(apiUrl, (error, response, body) => {
       });
     });
   } catch (parseError) {
-    console.error("Error parsing JSON:", parseError);
+    console.error('Error parsing JSON:', parseError);
   }
 });
